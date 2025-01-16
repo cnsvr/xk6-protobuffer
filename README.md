@@ -53,3 +53,7 @@ Replace `{proto-benchmark-file}.js` with the actual file name of your protobuf b
 
 Command to run examples:
 ```./k6 run example.js```
+
+
+## References
+- [traveltime-dev/xk6-protobuf](traveltime-dev/xk6-protobuf)
