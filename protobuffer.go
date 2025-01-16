@@ -1,4 +1,4 @@
-package protobuf
+package protobuffer
 
 import (
 	"context"
