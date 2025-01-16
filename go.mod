@@ -1,4 +1,4 @@
-module github.com/cnsvr/k6-protobuf-extension
+module github.com/cnsvr/xk6-protobuffer
 
 go 1.23.4
 

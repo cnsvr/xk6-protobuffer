@@ -1,4 +1,4 @@
-# k6-protobuffer
+# xk6-protobuffer
 A k6 extension for decoding and encoding proto files. Built using [xk6](https://github.com/grafana/xk6).
 
 
@@ -52,4 +52,4 @@ Replace `{proto-benchmark-file}.js` with the actual file name of your protobuf b
 ## Examples
 
 Command to run examples:
-```./k6 run example/codec.js```
+```./k6 run example.js```
