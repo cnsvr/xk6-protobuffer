@@ -3,6 +3,8 @@ package protobuffer
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"go.k6.io/k6/js/modules"
 	"google.golang.org/protobuf/proto"
@@ -34,6 +36,32 @@ type ProtoMessage struct {
 	Message     *dynamicpb.Message
 }
 
+func (p *ProtoBuffer) LoadFromFolder(folderPath string) error {
+	p.Compiler.Resolver = &protocompile.SourceResolver{
+		ImportPaths: []string{
+			".",
+			folderPath,
+		},
+	}
+
+	// Klasördeki tüm .proto dosyalarını tara
+	err := filepath.WalkDir(folderPath, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("error accessing path %s: %w", path, err)
+		}
+
+		// Sadece .proto dosyalarını işle
+		if !d.IsDir() && filepath.Ext(path) == ".proto" {
+			if err := p.LoadProtoFile(path); err != nil {
+				return fmt.Errorf("failed to load proto file %s: %w", path, err)
+			}
+		}
+		return nil
+	})
+
+	return err
+}
+
 func (p *ProtoBuffer) Load(protoFilePath, messageType string) (*ProtoMessage, error) {
 	files, err := p.Compiler.Compile(context.Background(), protoFilePath)
 	if err != nil {
@@ -55,6 +83,40 @@ func (p *ProtoBuffer) Load(protoFilePath, messageType string) (*ProtoMessage, er
 
 	p.Messages[messageType] = protoMessage
 	return protoMessage, nil
+}
+
+func (p *ProtoBuffer) LoadProtoFile(protoFilePath string) error {
+	files, err := p.Compiler.Compile(context.Background(), protoFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to compile proto file: %w", err)
+	}
+	if len(files) == 0 {
+		return fmt.Errorf("no files parsed in proto file: %s", protoFilePath)
+	}
+
+	for _, file := range files {
+		messages := file.Messages()
+		for i := 0; i < messages.Len(); i++ {
+			messageDesc := messages.Get(i)
+			messageName := string(messageDesc.Name())
+			if _, exists := p.Messages[messageName]; exists {
+				return fmt.Errorf("duplicate message name found: %s", messageName)
+			}
+			p.Messages[messageName] = &ProtoMessage{
+				MessageDesc: messageDesc,
+				Message:     dynamicpb.NewMessage(messageDesc),
+			}
+		}
+	}
+	return nil
+}
+
+func (p *ProtoBuffer) Get(messageType string) (*ProtoMessage, error) {
+	message, exists := p.Messages[messageType]
+	if !exists {
+		return nil, fmt.Errorf("message type '%s' not found", messageType)
+	}
+	return message, nil
 }
 
 func (pm *ProtoMessage) Encode() ([]byte, error) {
