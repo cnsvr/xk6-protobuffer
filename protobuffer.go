@@ -85,36 +85,6 @@ func (p *ProtoBuffer) Load(protoFilePath, messageType string) (*ProtoMessage, er
 	return protoMessage, nil
 }
 
-func (p *ProtoBuffer) LoadWithPath(protoFilePath, messageType string) (*ProtoMessage, error) {
-	p.Compiler.Resolver = &protocompile.SourceResolver{
-		ImportPaths: []string{
-			".",
-			protoFilePath,
-		},
-	}
-
-	files, err := p.Compiler.Compile(context.Background(), protoFilePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to compile proto file: %w", err)
-	}
-	if len(files) == 0 {
-		return nil, fmt.Errorf("no files parsed in proto file: %s", protoFilePath)
-	}
-
-	messageDesc := files[0].Messages().ByName(protoreflect.Name(messageType))
-	if messageDesc == nil {
-		return nil, fmt.Errorf("message type '%s' not found in proto file '%s'", messageType, protoFilePath)
-	}
-
-	protoMessage := &ProtoMessage{
-		MessageDesc: messageDesc,
-		Message:     dynamicpb.NewMessage(messageDesc),
-	}
-
-	p.Messages[messageType] = protoMessage
-	return protoMessage, nil
-}
-
 func (p *ProtoBuffer) LoadProtoFile(protoFilePath string) error {
 	files, err := p.Compiler.Compile(context.Background(), protoFilePath)
 	if err != nil {
