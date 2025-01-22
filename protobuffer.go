@@ -172,6 +172,13 @@ func (pm *ProtoMessage) SetField(field string, value interface{}) error {
 		}
 		protoValue = protoreflect.ValueOf(strValue)
 
+	case protoreflect.BoolKind:
+		boolValue, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("field '%s' expects a bool value, got %T", field, value)
+		}
+		protoValue = protoreflect.ValueOf(boolValue)
+
 	default:
 		return fmt.Errorf("unsupported field kind for '%s': %s", field, fieldDesc.Kind())
 	}
